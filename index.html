@@ -2,14 +2,14 @@
 <html lang="he" dir="rtl">
 <head>
   <meta charset="UTF-8" />
-  <title>סקי ווידאו עם מהירות בזמן אמת</title>
+  <title>סקי וידאו עם מהירות</title>
 
   <!-- SEO -->
-  <meta name="description" content="אפליקציית וידאו לסקי שמציגה מהירות בזמן אמת על המסך ושומרת את הסרטון עם המד. מותאם מובייל, תומך PWA." />
-  <meta name="keywords" content="סקי, סנובורד, מצלמה, מהירות, GPS, וידאו, גלישה, PWA, ski, snowboard, speed overlay" />
+  <meta name="description" content="אפליקציית וידאו לסקי שמראה מהירות בזמן אמת ושומרת את הסרטון עם המד." />
+  <meta name="keywords" content="סקי, סנובורד, מהירות, מצלמה, וידאו, PWA, גלישה, ski video, speed overlay" />
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1" />
   <meta name="theme-color" content="#000000" />
-  <!-- כאן תדביק מטא של גוגל -->
+  <!-- כאן תדביק את המטא של גוגל אם צריך -->
   <!-- <meta name="google-site-verification" content="XXXXXX" /> -->
 
   <!-- PWA -->
@@ -19,14 +19,14 @@
 
   <style>
     :root {
-      --hud-bg: rgba(255,255,255,0.9);
-      --hud-text: #000000;
+      --hud-bg: rgba(255,255,255,0.95);
+      --hud-text: #000;
       --seg-off: rgba(0,0,0,0.08);
-      --seg-on-green: #3bd385;
-      --seg-on-cyan: #00c8ff;
-      --seg-on-blue: #2b7cff;
-      --seg-on-red: #ff4a4a;
-      --seg-on-black: #000;
+      --seg-green: #33ce7f;
+      --seg-cyan: #00c0ff;
+      --seg-blue: #2b7cff;
+      --seg-red: #ff4a4a;
+      --seg-black: #000;
     }
     * {
       box-sizing: border-box;
@@ -37,11 +37,11 @@
       background: #000;
       color: #fff;
       font-family: Arial, sans-serif;
+      min-height: 100vh;
       user-select: none;
       -webkit-user-select: none;
       touch-action: manipulation;
       overscroll-behavior: none;
-      min-height: 100vh;
     }
     .app {
       position: fixed;
@@ -61,7 +61,7 @@
       display: none;
     }
 
-    /* הודעה שמחשב לא נתמך */
+    /* חסימת מחשב */
     .desktop-block {
       position: fixed;
       inset: 0;
@@ -81,7 +81,7 @@
     .intro-overlay {
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.78);
+      background: rgba(0,0,0,0.8);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -94,7 +94,7 @@
       width: min(90%, 360px);
       padding: 20px 16px 16px 16px;
       text-align: center;
-      box-shadow: 0 14px 40px rgba(0,0,0,0.35);
+      box-shadow: 0 12px 30px rgba(0,0,0,0.35);
     }
     .intro-title {
       font-weight: 700;
@@ -119,17 +119,15 @@
       width: 100%;
     }
 
-    /* HUD מהירות */
+    /* HUD */
     .hud {
       position: absolute;
-      top: 16%;
-      left: 10px;
+      z-index: 50;
       width: 140px;
       background: var(--hud-bg);
       border-radius: 18px;
       box-shadow: 0 8px 20px rgba(0,0,0,0.25);
       padding: 10px 10px 14px 10px;
-      z-index: 50;
       touch-action: none;
       transform-origin: top left;
     }
@@ -139,39 +137,45 @@
       text-transform: uppercase;
       color: rgba(0,0,0,0.55);
       margin-bottom: 3px;
+      pointer-events: none;
     }
     .hud-speed-row {
       display: flex;
       align-items: flex-end;
       gap: 4px;
-      margin-bottom: 8px;
+      margin-bottom: 3px;
+      pointer-events: none;
     }
     .hud-value {
       font-size: 38px;
-      line-height: 0.9;
+      line-height: .9;
       font-weight: 700;
       color: var(--hud-text);
+      pointer-events: none;
     }
     .hud-unit {
       font-size: 11px;
       font-weight: 600;
       color: rgba(0,0,0,0.55);
       margin-bottom: 4px;
+      pointer-events: none;
     }
     .hud-segments {
       display: flex;
       flex-direction: column;
       gap: 4px;
-      width: 9px;
+      width: 10px;
       margin-left: auto;
+      pointer-events: none;
     }
     .hud-segment {
       width: 100%;
-      height: 20px;
+      height: 19px;
       border-radius: 999px;
       background: var(--seg-off);
     }
-    /* כפתורי הקלטה */
+
+    /* כפתורים */
     .controls {
       position: absolute;
       bottom: 18px;
@@ -186,7 +190,7 @@
       height: 78px;
       border-radius: 999px;
       background: radial-gradient(circle at top, #00d1ff 0%, #0066ff 75%);
-      border: 3px solid rgba(255,255,255,0.4);
+      border: 3px solid rgba(255,255,255,0.35);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -197,13 +201,14 @@
       width: 30px;
       height: 30px;
       fill: #fff;
+      pointer-events: none;
     }
     .stop-btn {
       width: 78px;
       height: 78px;
       border-radius: 18px;
       background: rgba(0,0,0,0.35);
-      border: 2px solid rgba(255,0,0,0.5);
+      border: 2px solid rgba(255,0,0,0.45);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -213,6 +218,7 @@
       width: 26px;
       height: 26px;
       fill: #ff4444;
+      pointer-events: none;
     }
     .hidden { display: none !important; }
 
@@ -229,19 +235,28 @@
       display: none;
       z-index: 2000;
     }
+
+    @media (max-width: 500px) {
+      .hud {
+        width: 130px;
+      }
+      .hud-value {
+        font-size: 34px;
+      }
+    }
   </style>
 </head>
 <body>
-  <div class="desktop-block" id="desktopBlock">
-    האפליקציה הזו נועדה לשימוש במובייל בלבד (iPhone / Android).<br>
-    פתח את הקישור מהטלפון שלך.
+  <div id="desktopBlock" class="desktop-block">
+    האפליקציה הזו עובדת רק במובייל (iPhone / Android).<br>
+    פתח את הקישור מהטלפון.
   </div>
 
-  <div class="app" id="app">
+  <div id="app" class="app">
     <video id="cam" playsinline autoplay muted></video>
     <canvas id="rec" width="1280" height="720"></canvas>
 
-    <!-- HUD -->
+    <!-- HUD (נע למיקום + דאבל טאפ להגדלה) -->
     <div id="hud" class="hud">
       <div class="hud-header">LIVE SPEED</div>
       <div class="hud-speed-row">
@@ -259,10 +274,9 @@
       </div>
     </div>
 
-    <!-- בקרות -->
+    <!-- כפתורי הקלטה -->
     <div class="controls">
       <div id="btnRec" class="rec-btn" title="התחל הקלטה">
-        <!-- play -->
         <svg viewBox="0 0 24 24">
           <path d="M8 5v14l11-7z" />
         </svg>
@@ -274,32 +288,32 @@
       </div>
     </div>
 
-    <!-- הוראות -->
+    <!-- הוראות פתיחה -->
     <div id="intro" class="intro-overlay">
       <div class="intro-box">
-        <div class="intro-title">איך מצלמים?</div>
+        <div class="intro-title">הפעלת האפליקציה</div>
         <div class="intro-text">
-          אפשר מצלמה ומיקום.<br>
-          גרור את מד המהירות למקום על המסך.<br>
-          דאבל־טאץ’ על המד כדי להגדיל/להקטין.<br>
-          לחץ על הכפתור התחתון כדי להתחיל הקלטה.
+          1. תאפשר מצלמה ומיקום.<br>
+          2. גרור את מד המהירות איפה שאתה רוצה.<br>
+          3. דאבל־טאץ’ על המד כדי לשנות גודל.<br>
+          4. לחץ על הכפתור כדי לצלם.
         </div>
-        <button id="introBtn" class="intro-btn">הבנתי, תן לי להתחיל</button>
+        <button id="introBtn" class="intro-btn">הבנתי</button>
       </div>
     </div>
 
-    <div id="toast" class="toast">הוידאו מוכן. אם אתה ב-iPhone תפתח ותשמור ידנית.</div>
+    <div id="toast" class="toast">הוידאו מוכן. אם אתה באייפון – פתח ושמור ידנית.</div>
   </div>
 
   <script>
-    // ======== זיהוי מחשב ========
+    // ===== זיהוי מובייל =====
     const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
     const desktopBlock = document.getElementById('desktopBlock');
     if (!isMobile) {
       desktopBlock.style.display = 'flex';
     }
 
-    // ======== אלמנטים ========
+    // ===== אלמנטים =====
     const cam = document.getElementById('cam');
     const canvas = document.getElementById('rec');
     const ctx = canvas.getContext('2d');
@@ -324,31 +338,58 @@
     let chunks = [];
     let draggingHud = false;
     let dragOffsetX = 0, dragOffsetY = 0;
-    let hudScaleIdx = 1; // 0=קטן,1=רגיל,2=גדול
-    const hudScales = [0.8, 1, 1.25];
+    let hudScaleIdx = 1;
+    const hudScales = [0.85, 1, 1.25];
 
-    // ======== פתיחת מצלמה ========
+    // נשמור מיקום יחסית לאחוזים – זה מה שיתוקן לך
+    let hudPos = {
+      xPct: 3,   // אחוז מהשמאל
+      yPct: 16,  // אחוז מהחלק העליון
+      scale: 1
+    };
+
+    // שחזור אם קיים
+    const savedHud = localStorage.getItem('ski_hud_pos_v2');
+    if (savedHud) {
+      hudPos = JSON.parse(savedHud);
+    }
+
+    function applyHudPosition() {
+      const vw = window.innerWidth;
+      const vh = window.innerHeight;
+      const left = (hudPos.xPct / 100) * vw;
+      const top = (hudPos.yPct / 100) * vh;
+      hud.style.left = left + 'px';
+      hud.style.top = top + 'px';
+      hud.style.transform = `scale(${hudPos.scale})`;
+    }
+    applyHudPosition();
+
+    // ===== מצלמה =====
     async function startCam() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: 'environment' },
-          audio: true
+          audio: {
+            echoCancellation: false,
+            noiseSuppression: false,
+            autoGainControl: false
+          }
         });
         cam.srcObject = stream;
         cam.onloadedmetadata = () => {
           cam.play();
-          // שים את הקנבס על אותו יחס כדי שלא יתמתח
           canvas.width = cam.videoWidth || 1280;
           canvas.height = cam.videoHeight || 720;
         };
         drawLoop();
       } catch (e) {
-        alert('לא ניתן לפתוח מצלמה. בדוק הרשאות.');
+        alert('לא ניתן להפעיל מצלמה/מיקרופון. בדוק הרשאות.');
       }
     }
     startCam();
 
-    // ======== בקשת GPS אחרי פעולה ========
+    // ===== GPS =====
     function requestGeo() {
       if (!("geolocation" in navigator)) return;
       navigator.geolocation.watchPosition(onGeo, err => {
@@ -360,19 +401,6 @@
       });
     }
 
-    introBtn.addEventListener('click', () => {
-      intro.style.display = 'none';
-      localStorage.setItem('ski_intro_done', '1');
-      requestGeo();
-    });
-
-    // אם כבר ראה פעם
-    if (localStorage.getItem('ski_intro_done') === '1') {
-      intro.style.display = 'none';
-      requestGeo();
-    }
-
-    // ======== GPS ========
     let lastGeo = null;
     function onGeo(pos) {
       const { latitude, longitude, speed } = pos.coords;
@@ -380,12 +408,10 @@
       if (speed != null) {
         kmh = speed * 3.6;
       } else if (lastGeo) {
-        // חישוב לפי מרחק
         const distKm = haversine(lastGeo.lat, lastGeo.lon, latitude, longitude);
         const dt = (pos.timestamp - lastGeo.t) / 1000;
         if (dt > 0) kmh = (distKm / (dt / 3600));
       }
-      // פילטר שיהיה חלק
       latestSpeed = Math.round(kmh * 0.6 + latestSpeed * 0.4);
       updateHUD(latestSpeed);
       lastGeo = { lat: latitude, lon: longitude, t: pos.timestamp };
@@ -395,38 +421,50 @@
       const toRad = d => d * Math.PI / 180;
       const dLat = toRad(lat2 - lat1);
       const dLon = toRad(lon2 - lon1);
-      const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
+      const a =
+        Math.sin(dLat/2)**2 +
+        Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
+        Math.sin(dLon/2)**2;
       const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
       return R * c;
     }
 
     function updateHUD(kmh) {
       hudVal.textContent = kmh;
-      // איפוס צבעים
       segs.forEach(s => s.style.background = 'var(--seg-off)');
-      // הדלקה לפי טווחים
-      if (kmh > 0) segs[0].style.background = 'var(--seg-on-green)';
-      if (kmh >= 25) segs[1].style.background = 'var(--seg-on-cyan)';
-      if (kmh >= 45) segs[2].style.background = 'var(--seg-on-blue)';
-      if (kmh >= 70) segs[3].style.background = 'var(--seg-on-red)';
-      if (kmh >= 100) segs[4].style.background = 'var(--seg-on-black)';
+      if (kmh >= 1) segs[0].style.background = 'var(--seg-green)';
+      if (kmh >= 25) segs[1].style.background = 'var(--seg-cyan)';
+      if (kmh >= 45) segs[2].style.background = 'var(--seg-blue)';
+      if (kmh >= 70) segs[3].style.background = 'var(--seg-red)';
+      if (kmh >= 100) segs[4].style.background = 'var(--seg-black)';
     }
 
-    // ======== גרירת HUD ========
-    hud.addEventListener('mousedown', startHudDrag);
-    hud.addEventListener('touchstart', startHudDrag, {passive:false});
-    function startHudDrag(e) {
+    // ===== סגירת הוראות =====
+    introBtn.addEventListener('click', () => {
+      intro.style.display = 'none';
+      localStorage.setItem('ski_intro_done', '1');
+      requestGeo();
+    });
+    if (localStorage.getItem('ski_intro_done') === '1') {
+      intro.style.display = 'none';
+      requestGeo();
+    }
+
+    // ===== גרירת HUD =====
+    hud.addEventListener('mousedown', startDragHud);
+    hud.addEventListener('touchstart', startDragHud, {passive:false});
+    function startDragHud(e) {
       draggingHud = true;
-      const rect = hud.getBoundingClientRect();
       const clientX = e.touches ? e.touches[0].clientX : e.clientX;
       const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      const rect = hud.getBoundingClientRect();
       dragOffsetX = clientX - rect.left;
       dragOffsetY = clientY - rect.top;
       e.preventDefault();
     }
-    document.addEventListener('mousemove', hudDragMove);
-    document.addEventListener('touchmove', hudDragMove, {passive:false});
-    function hudDragMove(e) {
+    document.addEventListener('mousemove', dragHudMove);
+    document.addEventListener('touchmove', dragHudMove, {passive:false});
+    function dragHudMove(e) {
       if (!draggingHud) return;
       const clientX = e.touches ? e.touches[0].clientX : e.clientX;
       const clientY = e.touches ? e.touches[0].clientY : e.clientY;
@@ -440,61 +478,57 @@
       if (newTop > maxTop) newTop = maxTop;
       hud.style.left = newLeft + 'px';
       hud.style.top = newTop + 'px';
+      // נשמור אחוזים
+      hudPos.xPct = (newLeft / window.innerWidth) * 100;
+      hudPos.yPct = (newTop / window.innerHeight) * 100;
       saveHudPos();
+      e.preventDefault();
     }
     document.addEventListener('mouseup', () => draggingHud = false);
     document.addEventListener('touchend', () => draggingHud = false);
 
-    // דאבל־טאץ’ להגדלה/הקטנה
+    // דאבל טאפ להגדלה
     let lastTap = 0;
     hud.addEventListener('touchend', (e) => {
       const now = Date.now();
       if (now - lastTap < 300) {
-        // דאבל
         hudScaleIdx = (hudScaleIdx + 1) % hudScales.length;
-        hud.style.transform = `scale(${hudScales[hudScaleIdx]})`;
+        hudPos.scale = hudScales[hudScaleIdx];
+        hud.style.transform = `scale(${hudPos.scale})`;
         saveHudPos();
       }
       lastTap = now;
     });
 
-    // שמירה
     function saveHudPos() {
-      const r = hud.getBoundingClientRect();
-      localStorage.setItem('ski_hud_pos', JSON.stringify({
-        left: r.left,
-        top: r.top,
-        scale: hudScales[hudScaleIdx]
-      }));
-    }
-    // שחזור
-    const saved = localStorage.getItem('ski_hud_pos');
-    if (saved) {
-      const d = JSON.parse(saved);
-      hud.style.left = d.left + 'px';
-      hud.style.top = d.top + 'px';
-      hud.style.transform = `scale(${d.scale})`;
-      hudScaleIdx = hudScales.indexOf(d.scale);
-      if (hudScaleIdx === -1) hudScaleIdx = 1;
+      localStorage.setItem('ski_hud_pos_v2', JSON.stringify(hudPos));
     }
 
-    // ======== הקלטה ========
-    btnRec.addEventListener('click', () => {
-      // אם לא ביקשנו עדיין GPS – זה הזמן
-      requestGeo();
-      startRecording();
-    });
+    // ===== הקלטה =====
+    btnRec.addEventListener('click', startRecording);
     btnStop.addEventListener('click', stopRecording);
 
     function startRecording() {
       if (recording) return;
-      const stream = canvas.captureStream(30);
+
+      // stream מהקנבס
+      const canvasStream = canvas.captureStream(30);
+      // להוסיף אודיו מהמצלמה
+      const camStream = cam.srcObject;
+      if (camStream) {
+        const audioTracks = camStream.getAudioTracks();
+        audioTracks.forEach(t => canvasStream.addTrack(t));
+      }
+
       try {
-        mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9,opus' });
+        mediaRecorder = new MediaRecorder(canvasStream, {
+          mimeType: 'video/webm;codecs=vp9,opus'
+        });
       } catch (e) {
-        alert('הדפדפן לא תומך בהקלטת וידאו מהסוג הזה.');
+        alert('הדפדפן לא תומך בהקלטה מהסוג הזה.');
         return;
       }
+
       chunks = [];
       mediaRecorder.ondataavailable = ev => {
         if (ev.data.size > 0) chunks.push(ev.data);
@@ -517,10 +551,9 @@
     function onRecordingStop() {
       const blob = new Blob(chunks, { type: 'video/webm' });
       const url = URL.createObjectURL(blob);
-
-      // iOS – לפתוח בחלון חדש כדי שיוכל לשמור
       const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
       if (isIOS) {
+        // באייפון – לפתוח בחלון חדש
         window.open(url, '_blank');
       } else {
         const a = document.createElement('a');
@@ -538,57 +571,49 @@
       setTimeout(() => toast.style.display = 'none', 4000);
     }
 
-    // ======== לולאת ציור ========
+    // ===== ציור קבוע לקנבס =====
     function drawLoop() {
       if (cam.readyState >= 2) {
-        // נשמור יחס: נצייר את הוידאו בקנבס 1:1
+        // וידאו בגודל המקורי -> לא מותח
         ctx.drawImage(cam, 0, 0, canvas.width, canvas.height);
 
-        // לצייר את ה-HUD במיקום שלו
-        const hudRect = hud.getBoundingClientRect();
-        const bodyRect = document.body.getBoundingClientRect();
-        const x = hudRect.left - bodyRect.left;
-        const y = hudRect.top - bodyRect.top;
-        const w = hudRect.width;
-        const h = hudRect.height;
+        // ציור HUD לפי אחוזים
+        const x = (hudPos.xPct / 100) * canvas.width;
+        const y = (hudPos.yPct / 100) * canvas.height;
+        const scale = hudPos.scale || 1;
+        const baseW = 140;
+        const baseH = 95;
+        const w = baseW * scale;
+        const h = baseH * scale;
 
-        // רקע לבן שקוף בוידאו
-        ctx.fillStyle = 'rgba(255,255,255,0.9)';
+        // קופסה לבנה
+        ctx.fillStyle = 'rgba(255,255,255,0.92)';
         ctx.fillRect(x, y, w, h);
-
         // טקסט
         ctx.fillStyle = '#000';
-        ctx.font = '10px Arial';
-        ctx.fillText('LIVE SPEED', x + 6, y + 13);
+        ctx.font = `${10 * scale}px Arial`;
+        ctx.fillText('LIVE SPEED', x + 6*scale, y + 13*scale);
+        ctx.font = `${34 * scale}px Arial`;
+        ctx.fillText(latestSpeed.toString(), x + 6*scale, y + 53*scale);
+        ctx.font = `${12 * scale}px Arial`;
+        ctx.fillText('KM/H', x + 6*scale, y + 68*scale);
 
-        ctx.font = 'bold 34px Arial';
-        ctx.fillText(latestSpeed.toString(), x + 6, y + 55);
-        ctx.font = '12px Arial';
-        ctx.fillText('KM/H', x + 6, y + 70);
-
-        // סגמנטים בצד ימין
-        const segW = 9;
-        const segH = 20;
-        const gap = 4;
-        const baseX = x + w - segW - 6;
-        const baseY = y + 20;
-        const speeds = [
-          {limit: 1, color: 'rgba(0,0,0,0.08)'},
-          {limit: 25, color: '#3bd385'},
-          {limit: 45, color: '#00c8ff'},
-          {limit: 70, color: '#2b7cff'},
-          {limit: 100, color: '#ff4a4a'},
-          {limit: 130, color: '#000'}
-        ];
-        // נצבע לפי מהירות
-        for (let i = 0; i < 5; i++) {
-          let color = 'rgba(0,0,0,0.08)';
-          if (latestSpeed >= 100 && i === 4) color = '#000';
-          else if (latestSpeed >= 70 && i === 3) color = '#ff4a4a';
-          else if (latestSpeed >= 45 && i === 2) color = '#2b7cff';
-          else if (latestSpeed >= 25 && i === 1) color = '#00c8ff';
-          else if (latestSpeed >= 1 && i === 0) color = '#3bd385';
-          ctx.fillStyle = color;
+        // סגמנטים
+        const segW = 10 * scale;
+        const segH = 18 * scale;
+        const gap = 4 * scale;
+        const baseX = x + w - segW - 6*scale;
+        const baseY = y + 20*scale;
+        function segColor(i) {
+          if (latestSpeed >= 100 && i === 4) return '#000';
+          if (latestSpeed >= 70 && i === 3) return '#ff4a4a';
+          if (latestSpeed >= 45 && i === 2) return '#2b7cff';
+          if (latestSpeed >= 25 && i === 1) return '#00c0ff';
+          if (latestSpeed >= 1 && i === 0) return '#33ce7f';
+          return 'rgba(0,0,0,0.08)';
+        }
+        for (let i=0;i<5;i++) {
+          ctx.fillStyle = segColor(i);
           ctx.fillRect(baseX, baseY + i*(segH+gap), segW, segH);
         }
       }
