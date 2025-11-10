@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+  <meta charset="UTF-8" />
+  <title>אפליקציית סקי וידאו עם מהירות</title>
+
+  <!-- SEO בסיסי אגרסיבי -->
+  <meta name="description" content="אפליקציית וידאו סקי להקלטת מסלול עם מד מהירות חי בזמן אמת ותמיכה ב-PWA." />
+  <meta name="keywords" content="סקי, אפליקציית סקי, מד מהירות, וידאו, PWA, הקלטת מסלול, גלישה" />
+
+  <!-- כאן תדביק את המטא של גוגל סרץ' קונסול -->
+  <!-- <meta name="google-site-verification" content="XXXX"> -->
+
+  <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1" />
+  <meta name="theme-color" content="#0a0d12" />
+
+  <!-- PWA -->
+  <link rel="manifest" href="manifest.json" />
+  <link rel="apple-touch-icon" href="icons/icon-192.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+
+  <style>
+    :root {
+      --bg: #0a0d12;
+      --panel: rgba(8,10,14,0.85);
+      --turq: #00d5ff;
+      --green: #26c281;
+      --blue: #2c82c9;
+      --red: #e74c3c;
+      --black: #000;
+      --text: #fff;
+    }
+    * { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #ffffff;
+      font-family: Arial, sans-serif;
+      color: #111;
+      min-height: 100vh;
+    }
+    header {
+      background: #10131a;
+      color: #fff;
+      padding: 12px 16px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 12px;
+    }
+    header h1 {
+      font-size: 15px;
+      margin: 0;
+    }
+    .pwa-preview {
+      width: 130px;
+      height: 40px;
+      background: #fff;
+      border-radius: 8px;
+      overflow: hidden;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 12px;
+      color: #000;
+    }
+    .app-shell {
+      position: relative;
+      width: 100%;
+      height: calc(100vh - 64px);
+      background: #000;
+      overflow: hidden;
+    }
+    /* וידאו תצוגה */
+    video#preview {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      background: #000;
+    }
+    /* קנבס הקלטה (מוסתר) */
+    canvas#recordCanvas {
+      display: none;
+    }
+
+    /* שכבת מקם את המד */
+    .place-speed-overlay {
+      position: absolute;
+      inset: 0;
+      background: rgba(0,0,0,0.55);
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+      align-items: center;
+      justify-content: center;
+      color: #fff;
+      z-index: 40;
+      text-align: center;
+      padding: 10px;
+    }
+    .place-speed-overlay button {
+      padding: 9px 14px;
+      background: #00d5ff;
+      border: none;
+      border-radius: 6px;
+      font-weight: bold;
+      cursor: pointer;
+    }
+
+    /* ווידג'ט מהירות (נגרר) */
+    .speed-widget {
+      position: absolute;
+      top: 25%;
+      right: 15%;
+      background: rgba(0,0,0,0.5);
+      border: 1px solid rgba(255,255,255,0.25);
+      border-radius: 10px;
+      padding: 6px 10px;
+      min-width: 120px;
+      z-index: 35;
+      touch-action: none;
+      backdrop-filter: blur(6px);
+    }
+    .speed-value {
+      font-size: 24px;
+      line-height: 1;
+      color: #fff;
+      font-weight: bold;
+      text-align: center;
+    }
+    .speed-label {
+      font-size: 11px;
+      text-align: center;
+      color: rgba(255,255,255,0.7);
+      margin-bottom: 4px;
+    }
+    .speed-bar {
+      width: 100%;
+      height: 8px;
+      background: rgba(255,255,255,0.1);
+      border-radius: 999px;
+      overflow: hidden;
+    }
+    .speed-bar-fill {
+      height: 100%;
+      width: 0%;
+      background: #26c281;
+      transition: width 0.25s linear, background 0.25s linear;
+    }
+    /* בקרות התחלה/סיום בסגנון SVG */
+    .controls {
+      position: absolute;
+      bottom: 14px;
+      right: 50%;
+      transform: translateX(50%);
+      display: flex;
+      gap: 14px;
+      z-index: 50;
+    }
+    .btn-circle {
+      width: 70px;
+      height: 70px;
+      border-radius: 50%;
+      background: rgba(0,0,0,0.4);
+      border: 2px solid rgba(255,255,255,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      backdrop-filter: blur(4px);
+    }
+    .btn-circle svg {
+      width: 32px;
+      height: 32px;
+      fill: #fff;
+    }
+    .hidden { display: none !important; }
+
+    /* פופאפ הודעה אחרי שמירה */
+    .toast {
+      position: fixed;
+      bottom: 90px;
+      left: 50%;
+      transform: translateX(-50%);
+      background: rgba(0,0,0,0.8);
+      color: #fff;
+      padding: 10px 15px;
+      border-radius: 6px;
+      font-size: 13px;
+      z-index: 300;
+      display: none;
+    }
+
+    @media (max-width: 600px) {
+      .controls {
+        bottom: 10px;
+      }
+      .btn-circle {
+        width: 62px;
+        height: 62px;
+      }
+      .speed-widget {
+        min-width: 110px;
+      }
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <h1>סקי וידאו עם מד מהירות</h1>
+    <div class="pwa-preview">
+      <!-- תמונה רנדומלית של הוספה למסך הבית, תחליף -->
+      <span>iPhone Add</span>
+    </div>
+  </header>
+
+  <main class="app-shell">
+    <video id="preview" playsinline autoplay muted></video>
+    <canvas id="recordCanvas" width="1280" height="720"></canvas>
+
+    <!-- שכבה למיקום ראשון -->
+    <div id="placeOverlay" class="place-speed-overlay">
+      <div>גרור את מד המהירות למיקום שאתה רוצה שיופיע בוידאו.</div>
+      <div>לאחר מכן לחץ על אישור.</div>
+      <button id="placeDoneBtn">אישור</button>
+    </div>
+
+    <!-- ווידג'ט מהירות נגרר -->
+    <div id="speedWidget" class="speed-widget">
+      <div class="speed-label">מהירות נוכחית</div>
+      <div class="speed-value" id="speedValue">0 קמ"ש</div>
+      <div class="speed-bar">
+        <div class="speed-bar-fill" id="speedBarFill"></div>
+      </div>
+    </div>
+
+    <!-- בקרות -->
+    <div class="controls">
+      <!-- התחלה -->
+      <div id="startBtn" class="btn-circle" title="התחל הקלטה">
+        <svg viewBox="0 0 24 24">
+          <polygon points="8,5 19,12 8,19" />
+        </svg>
+      </div>
+      <!-- עצירה -->
+      <div id="stopBtn" class="btn-circle hidden" title="עצור ושמור">
+        <svg viewBox="0 0 24 24">
+          <rect x="6" y="6" width="12" height="12" />
+        </svg>
+      </div>
+    </div>
+  </main>
+
+  <div id="toast" class="toast">הוידאו נוצר. אם לא נשמר אוטומטית – לחץ על ההורדה.</div>
+
+  <script>
+    // רישום service worker ל-PWA
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('sw.js').catch(function(err){
+        console.log('SW fail', err);
+      });
+    }
+
+    // תצוגה ותיעוד
+    const videoEl = document.getElementById('preview');
+    const canvasEl = document.getElementById('recordCanvas');
+    const ctx = canvasEl.getContext('2d');
+    const speedWidget = document.getElementById('speedWidget');
+    const speedValueEl = document.getElementById('speedValue');
+    const speedBarFill = document.getElementById('speedBarFill');
+    const placeOverlay = document.getElementById('placeOverlay');
+    const placeDoneBtn = document.getElementById('placeDoneBtn');
+    const startBtn = document.getElementById('startBtn');
+    const stopBtn = document.getElementById('stopBtn');
+    const toast = document.getElementById('toast');
+
+    let mediaStream = null;
+    let recorder = null;
+    let recordedChunks = [];
+    let recording = false;
+    let latestSpeed = 0; // בקמ"ש
+    let dragging = false;
+    let dragOffsetX = 0;
+    let dragOffsetY = 0;
+
+    // שמירת מיקום מהירות בלוקאל
+    const savedPos = JSON.parse(localStorage.getItem('speedWidgetPos') || 'null');
+    if (savedPos) {
+      speedWidget.style.top = savedPos.top;
+      speedWidget.style.left = savedPos.left;
+      speedWidget.style.right = 'auto'; // שלא יתנגש
+    }
+
+    // הפעלת מצלמה
+    async function initCamera() {
+      try {
+        mediaStream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: 'environment' },
+          audio: true
+        });
+        videoEl.srcObject = mediaStream;
+        videoEl.play();
+        drawLoop();
+      } catch (err) {
+        console.error('camera error', err);
+        alert('לא ניתן לפתוח מצלמה. בדוק הרשאות.');
+      }
+    }
+    initCamera();
+
+    // GPS מהירות
+    if ('geolocation' in navigator) {
+      let lastPos = null;
+      navigator.geolocation.watchPosition(function(pos){
+        let spd = pos.coords.speed; // מטר לשניה
+        if (spd == null && lastPos) {
+          // חישוב ידני
+          const dx = pos.coords.latitude - lastPos.latitude;
+          const dy = pos.coords.longitude - lastPos.longitude;
+          const dist = Math.sqrt(dx*dx + dy*dy) * 111139; // בקירוב מטר
+          const dt = (pos.timestamp - lastPos.timestamp) / 1000;
+          spd = dt > 0 ? dist / dt : 0;
+        }
+        if (spd == null) spd = 0;
+        latestSpeed = Math.max(0, Math.round(spd * 3.6)); // קמ"ש
+        updateSpeedUI(latestSpeed);
+        lastPos = { latitude: pos.coords.latitude, longitude: pos.coords.longitude, timestamp: pos.timestamp };
+      }, function(err){
+        console.log('gps error', err);
+      }, {
+        enableHighAccuracy: true,
+        maximumAge: 1000
+      });
+    } else {
+      console.log('no geolocation');
+    }
+
+    function updateSpeedUI(kmh) {
+      speedValueEl.textContent = kmh + ' קמ"ש';
+
+      // פס וקולור לפי טווחים
+      let perc = Math.min(kmh / 100, 1) * 100;
+      speedBarFill.style.width = perc + '%';
+      if (kmh <= 30) {
+        speedBarFill.style.background = 'var(--green)';
+      } else if (kmh <= 55) {
+        speedBarFill.style.background = 'var(--blue)';
+      } else if (kmh <= 100) {
+        speedBarFill.style.background = 'var(--red)';
+      } else {
+        speedBarFill.style.background = 'var(--black)';
+      }
+    }
+
+    // גרירה של הווידג'ט
+    function startDrag(e) {
+      dragging = true;
+      const rect = speedWidget.getBoundingClientRect();
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      dragOffsetX = clientX - rect.left;
+      dragOffsetY = clientY - rect.top;
+      e.preventDefault();
+    }
+    function duringDrag(e) {
+      if (!dragging) return;
+      const clientX = e.touches ? e.touches[0].clientX : e.clientX;
+      const clientY = e.touches ? e.touches[0].clientY : e.clientY;
+      let newLeft = clientX - dragOffsetX;
+      let newTop = clientY - dragOffsetY;
+      // גבולות
+      const maxLeft = window.innerWidth - speedWidget.offsetWidth;
+      const maxTop = window.innerHeight - speedWidget.offsetHeight;
+      if (newLeft < 0) newLeft = 0;
+      if (newTop < 0) newTop = 0;
+      if (newLeft > maxLeft) newLeft = maxLeft;
+      if (newTop > maxTop) newTop = maxTop;
+      speedWidget.style.left = newLeft + 'px';
+      speedWidget.style.top = newTop + 'px';
+      speedWidget.style.right = 'auto';
+    }
+    function endDrag() {
+      if (!dragging) return;
+      dragging = false;
+      // לשמור
+      localStorage.setItem('speedWidgetPos', JSON.stringify({
+        top: speedWidget.style.top,
+        left: speedWidget.style.left
+      }));
+    }
+    speedWidget.addEventListener('mousedown', startDrag);
+    document.addEventListener('mousemove', duringDrag);
+    document.addEventListener('mouseup', endDrag);
+
+    speedWidget.addEventListener('touchstart', startDrag, {passive:false});
+    document.addEventListener('touchmove', duringDrag, {passive:false});
+    document.addEventListener('touchend', endDrag);
+
+    // אישור מיקום
+    placeDoneBtn.addEventListener('click', function(){
+      placeOverlay.classList.add('hidden');
+    });
+
+    // לולאת ציור לקנבס (וידאו + מד מהירות במקום שבחרנו)
+    function drawLoop() {
+      if (videoEl.readyState >= 2) {
+        // לצייר את הווידאו על הקנבס בגודל מלא
+        ctx.drawImage(videoEl, 0, 0, canvasEl.width, canvasEl.height);
+
+        // לצייר מד מהירות באותו מיקום של האלמנט
+        const rect = speedWidget.getBoundingClientRect();
+        const appRect = document.querySelector('.app-shell').getBoundingClientRect();
+
+        const relX = rect.left - appRect.left;
+        const relY = rect.top - appRect.top;
+        const w = rect.width;
+        const h = rect.height;
+
+        ctx.save();
+        ctx.globalAlpha = 0.63;
+        ctx.fillStyle = '#000';
+        ctx.fillRect(relX, relY, w, h);
+        ctx.restore();
+
+        ctx.strokeStyle = 'rgba(255,255,255,0.6)';
+        ctx.strokeRect(relX, relY, w, h);
+
+        ctx.fillStyle = '#fff';
+        ctx.font = '14px Arial';
+        ctx.fillText('מהירות', relX + 6, relY + 16);
+
+        ctx.font = '20px Arial';
+        ctx.fillText(latestSpeed + ' קמ"ש', relX + 6, relY + 40);
+
+        // פס מהירות
+        const barY = relY + h - 18;
+        const barW = w - 12;
+        ctx.fillStyle = 'rgba(255,255,255,0.15)';
+        ctx.fillRect(relX + 6, barY, barW, 8);
+
+        let widthPerc = Math.min(latestSpeed/100, 1) * barW;
+        let color = '#26c281';
+        if (latestSpeed <= 30) color = '#26c281';
+        else if (latestSpeed <= 55) color = '#2c82c9';
+        else if (latestSpeed <= 100) color = '#e74c3c';
+        else color = '#000000';
+        ctx.fillStyle = color;
+        ctx.fillRect(relX + 6, barY, widthPerc, 8);
+      }
+      requestAnimationFrame(drawLoop);
+    }
+
+    // התחלת הקלטה
+    startBtn.addEventListener('click', function(){
+      if (recording) return;
+      const stream = canvasEl.captureStream(30); // 30fps
+      recorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9,opus' });
+      recordedChunks = [];
+
+      recorder.ondataavailable = function(e){
+        if (e.data.size > 0) recordedChunks.push(e.data);
+      };
+      recorder.onstop = function(){
+        const blob = new Blob(recordedChunks, { type: 'video/webm' });
+        const url = URL.createObjectURL(blob);
+
+        // הורדה אוטומטית
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = 'ski-speed-video.webm';
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }, 2000);
+
+        toast.style.display = 'block';
+        setTimeout(() => toast.style.display = 'none', 4000);
+      };
+
+      recorder.start();
+      recording = true;
+      startBtn.classList.add('hidden');
+      stopBtn.classList.remove('hidden');
+    });
+
+    // עצירת הקלטה
+    stopBtn.addEventListener('click', function(){
+      if (!recording) return;
+      recorder.stop();
+      recording = false;
+      stopBtn.classList.add('hidden');
+      startBtn.classList.remove('hidden');
+    });
+
+    // פופאף התקנה לאנדרואיד
+    let deferredPrompt = null;
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      deferredPrompt = e;
+      // כאן אפשר להראות כפתור "התקן"
+      console.log('PWA install available');
+    });
+  </script>
+</body>
+</html>
