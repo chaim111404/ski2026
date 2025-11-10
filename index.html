@@ -2,78 +2,54 @@
 <html lang="he" dir="rtl">
 <head>
   <meta charset="UTF-8" />
-  <title>אפליקציית סקי עם מד מהירות וצילום</title>
+  <title>סקי ווידאו עם מהירות בזמן אמת</title>
 
-  <!-- SEO אגרסיבי -->
-  <meta name="description" content="אפליקציית וידאו לסקי/סנובורד שמראה מהירות בזמן אמת על המסך ושומרת את הסרטון עם המד. תומך PWA להתקנה בנייד." />
-  <meta name="keywords" content="סקי, סנובורד, מד מהירות, מצלמה, אפליקציית סקי, צילום עם מהירות, PWA, וידאו, גלישה, ski, snowboard, speed overlay" />
-  <meta name="robots" content="index, follow" />
-
-  <!-- Open Graph -->
-  <meta property="og:title" content="אפליקציית סקי עם מד מהירות" />
-  <meta property="og:description" content="צלם את הגלישה ותראה את המהירות שלך חי על המסך." />
-  <meta property="og:type" content="website" />
-  <!-- כאן תחליף לתמונה שלך -->
-  <meta property="og:image" content="https://example.com/ski-app-cover.png" />
-
-  <!-- כאן תדביק את המטא של גוגל -->
-  <!-- <meta name="google-site-verification" content="XXXXXXX" /> -->
-
+  <!-- SEO -->
+  <meta name="description" content="אפליקציית וידאו לסקי שמציגה מהירות בזמן אמת על המסך ושומרת את הסרטון עם המד. מותאם מובייל, תומך PWA." />
+  <meta name="keywords" content="סקי, סנובורד, מצלמה, מהירות, GPS, וידאו, גלישה, PWA, ski, snowboard, speed overlay" />
   <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1" />
   <meta name="theme-color" content="#000000" />
+  <!-- כאן תדביק מטא של גוגל -->
+  <!-- <meta name="google-site-verification" content="XXXXXX" /> -->
 
   <!-- PWA -->
   <link rel="manifest" href="manifest.json" />
   <link rel="apple-touch-icon" href="icons/icon-192.png" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
 
-  <!-- schema.org בסיסי -->
-  <script type="application/ld+json">
-  {
-    "@context": "https://schema.org",
-    "@type": "SoftwareApplication",
-    "name": "אפליקציית סקי עם מד מהירות",
-    "applicationCategory": "SportsApplication",
-    "operatingSystem": "iOS, Android, Web",
-    "description": "צילום וידאו בזמן גלישה והצגת מהירות בזמן אמת",
-    "offers": {
-      "@type": "Offer",
-      "price": "0",
-      "priceCurrency": "ILS"
-    }
-  }
-  </script>
-
   <style>
     :root {
-      --hud-bg: rgba(0,0,0,0.15);
-      --hud-panel: rgba(5,7,10,0.6);
-      --hud-line: rgba(0,214,255,0.9);
-      --hud-white: #ffffff;
-      --hud-green: #36d995;
-      --hud-blue: #00c0ff;
-      --hud-red: #ff4a4a;
-      --hud-black: #000000;
-      --record-btn: linear-gradient(140deg,#00d5ff,#0085ff);
-      --danger: #ff4747;
+      --hud-bg: rgba(255,255,255,0.9);
+      --hud-text: #000000;
+      --seg-off: rgba(0,0,0,0.08);
+      --seg-on-green: #3bd385;
+      --seg-on-cyan: #00c8ff;
+      --seg-on-blue: #2b7cff;
+      --seg-on-red: #ff4a4a;
+      --seg-on-black: #000;
     }
-    * { box-sizing: border-box; }
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
     body {
       margin: 0;
       background: #000;
       color: #fff;
       font-family: Arial, sans-serif;
-      min-height: 100vh;
+      user-select: none;
+      -webkit-user-select: none;
       touch-action: manipulation;
       overscroll-behavior: none;
+      min-height: 100vh;
     }
-    .app-shell {
+    .app {
       position: fixed;
       inset: 0;
       background: #000;
       overflow: hidden;
     }
-    video#camera {
+    video#cam {
       position: absolute;
       inset: 0;
       width: 100%;
@@ -81,123 +57,120 @@
       object-fit: cover;
       background: #000;
     }
-    canvas#recorder {
+    canvas#rec {
       display: none;
     }
 
-    /* חלון הוראות חד פעמי */
-    .startup-help {
+    /* הודעה שמחשב לא נתמך */
+    .desktop-block {
       position: fixed;
       inset: 0;
-      background: rgba(0,0,0,0.8);
+      background: #000;
+      color: #fff;
+      display: none;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      padding: 20px;
+      z-index: 9999;
+      font-size: 16px;
+      line-height: 1.5;
+    }
+
+    /* הוראות פתיחה */
+    .intro-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.78);
       display: flex;
       align-items: center;
       justify-content: center;
       z-index: 200;
     }
-    .startup-box {
-      background: radial-gradient(circle at top, #101820 0%, #05080c 80%);
-      border: 1px solid rgba(255,255,255,0.12);
-      border-radius: 14px;
-      width: min(88%, 380px);
-      padding: 16px 16px 12px 16px;
+    .intro-box {
+      background: #fff;
+      color: #000;
+      border-radius: 16px;
+      width: min(90%, 360px);
+      padding: 20px 16px 16px 16px;
+      text-align: center;
+      box-shadow: 0 14px 40px rgba(0,0,0,0.35);
     }
-    .startup-title {
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      margin-bottom: 8px;
+    .intro-title {
+      font-weight: 700;
+      margin-bottom: 10px;
+      font-size: 17px;
     }
-    .startup-icon {
-      width: 28px;
-      height: 28px;
-      background: rgba(0,214,255,0.15);
-      border: 1px solid rgba(0,214,255,0.4);
-      border-radius: 8px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .startup-list {
+    .intro-text {
       font-size: 13px;
-      line-height: 1.35;
-      color: rgba(255,255,255,0.83);
-      margin-bottom: 12px;
+      line-height: 1.4;
+      margin-bottom: 16px;
     }
-    .startup-close {
-      display: inline-flex;
-      gap: 6px;
-      align-items: center;
-      background: #00bfff;
+    .intro-btn {
+      display: inline-block;
+      background: #000;
+      color: #fff;
       border: none;
-      padding: 7px 14px;
       border-radius: 999px;
+      padding: 10px 20px;
       font-weight: bold;
+      font-size: 14px;
       cursor: pointer;
-      font-size: 13px;
+      width: 100%;
     }
 
-    /* מד מהירות בסגנון HUD שמאלי */
-    .speed-hud {
+    /* HUD מהירות */
+    .hud {
       position: absolute;
-      top: 20%;
-      left: 12px;
-      width: 120px;
-      height: 210px;
+      top: 16%;
+      left: 10px;
+      width: 140px;
+      background: var(--hud-bg);
+      border-radius: 18px;
+      box-shadow: 0 8px 20px rgba(0,0,0,0.25);
+      padding: 10px 10px 14px 10px;
       z-index: 50;
       touch-action: none;
-      transform-origin: center center;
+      transform-origin: top left;
     }
-    .speed-hud-body {
-      position: relative;
-      width: 100%;
-      height: 100%;
-      background: rgba(0,0,0,0.05);
-    }
-    .speed-hud svg {
-      position: absolute;
-      inset: 0;
-      width: 100%;
-      height: 100%;
-    }
-    .speed-value-big {
-      position: absolute;
-      bottom: 50px;
-      left: 16px;
-      font-size: 40px;
-      font-weight: 700;
-      text-shadow: 0 0 9px rgba(0,0,0,0.6);
-      letter-spacing: -1px;
-    }
-    .speed-unit {
-      position: absolute;
-      bottom: 30px;
-      left: 18px;
-      font-size: 14px;
-      color: rgba(255,255,255,0.8);
+    .hud-header {
+      font-size: 10px;
       letter-spacing: 1px;
+      text-transform: uppercase;
+      color: rgba(0,0,0,0.55);
+      margin-bottom: 3px;
     }
-    .hud-handle {
-      position: absolute;
-      bottom: -14px;
-      right: -14px;
-      width: 26px;
-      height: 26px;
-      border-radius: 50%;
-      background: rgba(0,0,0,0.7);
-      border: 1px solid rgba(255,255,255,0.4);
+    .hud-speed-row {
       display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: se-resize;
-      z-index: 10;
+      align-items: flex-end;
+      gap: 4px;
+      margin-bottom: 8px;
     }
-    .hud-handle svg {
-      width: 16px;
-      height: 16px;
-      fill: #fff;
+    .hud-value {
+      font-size: 38px;
+      line-height: 0.9;
+      font-weight: 700;
+      color: var(--hud-text);
     }
-
+    .hud-unit {
+      font-size: 11px;
+      font-weight: 600;
+      color: rgba(0,0,0,0.55);
+      margin-bottom: 4px;
+    }
+    .hud-segments {
+      display: flex;
+      flex-direction: column;
+      gap: 4px;
+      width: 9px;
+      margin-left: auto;
+    }
+    .hud-segment {
+      width: 100%;
+      height: 20px;
+      border-radius: 999px;
+      background: var(--seg-off);
+    }
     /* כפתורי הקלטה */
     .controls {
       position: absolute;
@@ -206,19 +179,19 @@
       transform: translateX(-50%);
       display: flex;
       gap: 20px;
-      z-index: 100;
+      z-index: 60;
     }
     .rec-btn {
       width: 78px;
       height: 78px;
-      border-radius: 50%;
-      background: var(--record-btn);
+      border-radius: 999px;
+      background: radial-gradient(circle at top, #00d1ff 0%, #0066ff 75%);
+      border: 3px solid rgba(255,255,255,0.4);
       display: flex;
       align-items: center;
       justify-content: center;
-      box-shadow: 0 8px 25px rgba(0,214,255,0.35);
       cursor: pointer;
-      border: 3px solid rgba(255,255,255,0.4);
+      box-shadow: 0 8px 22px rgba(0,119,255,0.4);
     }
     .rec-btn svg {
       width: 30px;
@@ -228,9 +201,9 @@
     .stop-btn {
       width: 78px;
       height: 78px;
-      border-radius: 20px;
+      border-radius: 18px;
       background: rgba(0,0,0,0.35);
-      border: 2px solid rgba(255,0,0,0.55);
+      border: 2px solid rgba(255,0,0,0.5);
       display: flex;
       align-items: center;
       justify-content: center;
@@ -239,153 +212,123 @@
     .stop-btn svg {
       width: 26px;
       height: 26px;
-      fill: #ff4a4a;
+      fill: #ff4444;
     }
     .hidden { display: none !important; }
 
-    /* טוסט */
     .toast {
       position: fixed;
       bottom: 100px;
       left: 50%;
       transform: translateX(-50%);
       background: rgba(0,0,0,0.85);
-      border: 1px solid rgba(255,255,255,0.08);
+      color: #fff;
       padding: 9px 14px;
       border-radius: 8px;
       font-size: 13px;
-      z-index: 999;
       display: none;
-    }
-
-    @media (max-width: 500px) {
-      .speed-hud {
-        width: 108px;
-        height: 185px;
-      }
-      .speed-value-big {
-        font-size: 34px;
-      }
+      z-index: 2000;
     }
   </style>
 </head>
 <body>
-  <div class="app-shell">
-    <video id="camera" playsinline autoplay muted></video>
-    <canvas id="recorder" width="1280" height="720"></canvas>
+  <div class="desktop-block" id="desktopBlock">
+    האפליקציה הזו נועדה לשימוש במובייל בלבד (iPhone / Android).<br>
+    פתח את הקישור מהטלפון שלך.
+  </div>
 
-    <!-- חלון הוראות חד פעמי (נשמר ב-localStorage) -->
-    <div id="startup" class="startup-help">
-      <div class="startup-box">
-        <div class="startup-title">
-          <div class="startup-icon">
-            <!-- svg קטן -->
-            <svg viewBox="0 0 24 24" width="18" height="18">
-              <path fill="#00d5ff" d="M12 2L2 7l10 5 9-4.5V17h2V7L12 2zm0 13L5 10.5v4L12 19l7-4.5v-4L12 15z"/>
-            </svg>
-          </div>
-          <div>איך משתמשים</div>
+  <div class="app" id="app">
+    <video id="cam" playsinline autoplay muted></video>
+    <canvas id="rec" width="1280" height="720"></canvas>
+
+    <!-- HUD -->
+    <div id="hud" class="hud">
+      <div class="hud-header">LIVE SPEED</div>
+      <div class="hud-speed-row">
+        <div>
+          <div id="hudVal" class="hud-value">0</div>
+          <div class="hud-unit">KM/H</div>
         </div>
-        <div class="startup-list">
-          1. תאפשר מצלמה ומיקום.<br>
-          2. גרור את מד המהירות איפה שאתה רוצה על המסך.<br>
-          3. אפשר להגדיל עם העיגול הקטן למטה.<br>
-          4. לחץ צילום – המהירות שתראה זה מה שישמר בווידאו.<br>
+        <div class="hud-segments">
+          <div id="seg1" class="hud-segment"></div>
+          <div id="seg2" class="hud-segment"></div>
+          <div id="seg3" class="hud-segment"></div>
+          <div id="seg4" class="hud-segment"></div>
+          <div id="seg5" class="hud-segment"></div>
         </div>
-        <button id="startupClose" class="startup-close">
-          <svg viewBox="0 0 24 24" width="14" height="14">
-            <path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z" />
-          </svg>
-          הבנתי
-        </button>
       </div>
     </div>
 
-    <!-- HUD מהירות -->
-    <div id="hud" class="speed-hud">
-      <div class="speed-hud-body">
-        <!-- SVG של קשת עם חלקים (לא העתק של התמונה) -->
-        <svg viewBox="0 0 120 210" preserveAspectRatio="xMidYMid meet">
-          <!-- רקע קשת -->
-          <path d="M10 200 C 10 80 40 30 95 10" fill="none" stroke="rgba(255,255,255,0.12)" stroke-width="8" stroke-linecap="round" />
-          <!-- קו צבע שמתמלא נצייר בקנבס, כאן רק סימונים -->
-          <path d="M16 192 C 16 90 42 42 90 20" fill="none" stroke="rgba(0,214,255,0.4)" stroke-width="3" stroke-linecap="round" stroke-dasharray="3 8" />
-          <!-- סימוני מספרים -->
-          <text x="30" y="60" fill="rgba(255,255,255,0.18)" font-size="11">100</text>
-          <text x="18" y="105" fill="rgba(255,255,255,0.18)" font-size="11">70</text>
-          <text x="14" y="150" fill="rgba(255,255,255,0.18)" font-size="11">40</text>
-          <text x="12" y="188" fill="rgba(255,255,255,0.5)" font-size="11">0</text>
-        </svg>
-        <div id="speedVal" class="speed-value-big">0</div>
-        <div class="speed-unit">KM/H</div>
-      </div>
-      <div id="hudHandle" class="hud-handle" title="הגדלה/הקטנה">
-        <svg viewBox="0 0 24 24">
-          <path d="M3 21h6v-2H5v-4H3v6zm4-8h2V7h4V5H7v8zm8 8h6v-6h-2v4h-4v2zm2-8h2V7h-6v2h4v4z"/>
-        </svg>
-      </div>
-    </div>
-
-    <!-- כפתורים -->
+    <!-- בקרות -->
     <div class="controls">
-      <div id="recordBtn" class="rec-btn" title="התחל הקלטה">
-        <!-- play svg -->
+      <div id="btnRec" class="rec-btn" title="התחל הקלטה">
+        <!-- play -->
         <svg viewBox="0 0 24 24">
           <path d="M8 5v14l11-7z" />
         </svg>
       </div>
-      <div id="stopBtn" class="stop-btn hidden" title="עצור ושמור">
+      <div id="btnStop" class="stop-btn hidden" title="עצור ושמור">
         <svg viewBox="0 0 24 24">
-          <rect x="6" y="6" width="12" height="12" rx="1" ry="1"></rect>
+          <rect x="6" y="6" width="12" height="12" rx="1" />
         </svg>
       </div>
     </div>
 
-    <div id="toast" class="toast">הוידאו נוצר. אם לא נפתח - לחץ על ההורדה.</div>
+    <!-- הוראות -->
+    <div id="intro" class="intro-overlay">
+      <div class="intro-box">
+        <div class="intro-title">איך מצלמים?</div>
+        <div class="intro-text">
+          אפשר מצלמה ומיקום.<br>
+          גרור את מד המהירות למקום על המסך.<br>
+          דאבל־טאץ’ על המד כדי להגדיל/להקטין.<br>
+          לחץ על הכפתור התחתון כדי להתחיל הקלטה.
+        </div>
+        <button id="introBtn" class="intro-btn">הבנתי, תן לי להתחיל</button>
+      </div>
+    </div>
+
+    <div id="toast" class="toast">הוידאו מוכן. אם אתה ב-iPhone תפתח ותשמור ידנית.</div>
   </div>
 
   <script>
-    // ******* SERVICE WORKER ********
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('sw.js').catch(console.warn);
+    // ======== זיהוי מחשב ========
+    const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+    const desktopBlock = document.getElementById('desktopBlock');
+    if (!isMobile) {
+      desktopBlock.style.display = 'flex';
     }
 
-    // ******* אלמנטים *******
-    const cam = document.getElementById('camera');
-    const canvas = document.getElementById('recorder');
+    // ======== אלמנטים ========
+    const cam = document.getElementById('cam');
+    const canvas = document.getElementById('rec');
     const ctx = canvas.getContext('2d');
     const hud = document.getElementById('hud');
-    const hudHandle = document.getElementById('hudHandle');
-    const speedVal = document.getElementById('speedVal');
-    const recordBtn = document.getElementById('recordBtn');
-    const stopBtn = document.getElementById('stopBtn');
+    const hudVal = document.getElementById('hudVal');
+    const segs = [
+      document.getElementById('seg1'),
+      document.getElementById('seg2'),
+      document.getElementById('seg3'),
+      document.getElementById('seg4'),
+      document.getElementById('seg5')
+    ];
+    const btnRec = document.getElementById('btnRec');
+    const btnStop = document.getElementById('btnStop');
+    const intro = document.getElementById('intro');
+    const introBtn = document.getElementById('introBtn');
     const toast = document.getElementById('toast');
-    const startup = document.getElementById('startup');
-    const startupClose = document.getElementById('startupClose');
 
-    // ******* הוראות חד פעמי *******
-    if (localStorage.getItem('skiApp_seenHelp') === '1') {
-      startup.style.display = 'none';
-    }
-    startupClose.addEventListener('click', () => {
-      startup.style.display = 'none';
-      localStorage.setItem('skiApp_seenHelp', '1');
-    });
-
-    // ******* מצב כללי *******
-    let latestSpeed = 0; // km/h
+    let latestSpeed = 0;
     let recording = false;
-    let recorder = null;
+    let mediaRecorder = null;
     let chunks = [];
-    let hudScale = 1;
     let draggingHud = false;
-    let dragOffX = 0, dragOffY = 0;
-    let resizing = false;
-    let baseWidth = 120; // ליחס הגדלה
-    let geoLast = null;
+    let dragOffsetX = 0, dragOffsetY = 0;
+    let hudScaleIdx = 1; // 0=קטן,1=רגיל,2=גדול
+    const hudScales = [0.8, 1, 1.25];
 
-    // ******* הפעלת מצלמה *******
-    async function startCamera() {
+    // ======== פתיחת מצלמה ========
+    async function startCam() {
       try {
         const stream = await navigator.mediaDevices.getUserMedia({
           video: { facingMode: 'environment' },
@@ -394,87 +337,101 @@
         cam.srcObject = stream;
         cam.onloadedmetadata = () => {
           cam.play();
-          // להתאים קנבס לגודל הווידאו האמיתי
+          // שים את הקנבס על אותו יחס כדי שלא יתמתח
           canvas.width = cam.videoWidth || 1280;
           canvas.height = cam.videoHeight || 720;
         };
-        drawFrame();
+        drawLoop();
       } catch (e) {
         alert('לא ניתן לפתוח מצלמה. בדוק הרשאות.');
-        console.log(e);
       }
     }
-    startCamera();
+    startCam();
 
-    // ******* GPS מהירות משופר *******
-    if ("geolocation" in navigator) {
+    // ======== בקשת GPS אחרי פעולה ========
+    function requestGeo() {
+      if (!("geolocation" in navigator)) return;
       navigator.geolocation.watchPosition(onGeo, err => {
-        console.log('geo error', err);
+        console.log('geo err', err);
       }, {
         enableHighAccuracy: true,
         maximumAge: 1000,
         timeout: 8000
       });
     }
+
+    introBtn.addEventListener('click', () => {
+      intro.style.display = 'none';
+      localStorage.setItem('ski_intro_done', '1');
+      requestGeo();
+    });
+
+    // אם כבר ראה פעם
+    if (localStorage.getItem('ski_intro_done') === '1') {
+      intro.style.display = 'none';
+      requestGeo();
+    }
+
+    // ======== GPS ========
+    let lastGeo = null;
     function onGeo(pos) {
       const { latitude, longitude, speed } = pos.coords;
       let kmh = 0;
       if (speed != null) {
-        kmh = Math.max(0, speed * 3.6); // m/s -> km/h
-      } else if (geoLast) {
-        // חישוב לפי מרחק זמן
-        const d = haversine(geoLast.lat, geoLast.lon, latitude, longitude); // בק"מ
-        const dt = (pos.timestamp - geoLast.t) / 1000; //שניות
-        if (dt > 0) {
-          kmh = (d / (dt / 3600)); // קמ"ש
-        }
+        kmh = speed * 3.6;
+      } else if (lastGeo) {
+        // חישוב לפי מרחק
+        const distKm = haversine(lastGeo.lat, lastGeo.lon, latitude, longitude);
+        const dt = (pos.timestamp - lastGeo.t) / 1000;
+        if (dt > 0) kmh = (distKm / (dt / 3600));
       }
-      // עדכון עם החלקה כדי שלא יקפוץ
+      // פילטר שיהיה חלק
       latestSpeed = Math.round(kmh * 0.6 + latestSpeed * 0.4);
-      updateHud(latestSpeed);
-      geoLast = { lat: latitude, lon: longitude, t: pos.timestamp };
+      updateHUD(latestSpeed);
+      lastGeo = { lat: latitude, lon: longitude, t: pos.timestamp };
     }
     function haversine(lat1, lon1, lat2, lon2) {
-      const R = 6371; // km
-      const toRad = x => x * Math.PI / 180;
+      const R = 6371;
+      const toRad = d => d * Math.PI / 180;
       const dLat = toRad(lat2 - lat1);
       const dLon = toRad(lon2 - lon1);
-      const a = Math.sin(dLat/2) * Math.sin(dLat/2) +
-                Math.cos(toRad(lat1)) * Math.cos(toRad(lat2)) *
-                Math.sin(dLon/2) * Math.sin(dLon/2);
-      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
+      const a = Math.sin(dLat/2)**2 + Math.cos(toRad(lat1))*Math.cos(toRad(lat2))*Math.sin(dLon/2)**2;
+      const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
       return R * c;
     }
 
-    // ******* עדכון HUD *******
-    function updateHud(kmh) {
-      speedVal.textContent = kmh;
-      // אפשר כאן לשנות צבע outline לפי טווח, אבל את הקו אנחנו נצייר על הקנבס
+    function updateHUD(kmh) {
+      hudVal.textContent = kmh;
+      // איפוס צבעים
+      segs.forEach(s => s.style.background = 'var(--seg-off)');
+      // הדלקה לפי טווחים
+      if (kmh > 0) segs[0].style.background = 'var(--seg-on-green)';
+      if (kmh >= 25) segs[1].style.background = 'var(--seg-on-cyan)';
+      if (kmh >= 45) segs[2].style.background = 'var(--seg-on-blue)';
+      if (kmh >= 70) segs[3].style.background = 'var(--seg-on-red)';
+      if (kmh >= 100) segs[4].style.background = 'var(--seg-on-black)';
     }
 
-    // ******* גרירת HUD *******
+    // ======== גרירת HUD ========
     hud.addEventListener('mousedown', startHudDrag);
     hud.addEventListener('touchstart', startHudDrag, {passive:false});
     function startHudDrag(e) {
-      // אם לוחצים על הידית – לא לגרור
-      if (e.target === hudHandle) return;
       draggingHud = true;
       const rect = hud.getBoundingClientRect();
       const clientX = e.touches ? e.touches[0].clientX : e.clientX;
       const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-      dragOffX = clientX - rect.left;
-      dragOffY = clientY - rect.top;
+      dragOffsetX = clientX - rect.left;
+      dragOffsetY = clientY - rect.top;
       e.preventDefault();
     }
-    document.addEventListener('mousemove', moveHud);
-    document.addEventListener('touchmove', moveHud, {passive:false});
-    function moveHud(e) {
+    document.addEventListener('mousemove', hudDragMove);
+    document.addEventListener('touchmove', hudDragMove, {passive:false});
+    function hudDragMove(e) {
       if (!draggingHud) return;
       const clientX = e.touches ? e.touches[0].clientX : e.clientX;
       const clientY = e.touches ? e.touches[0].clientY : e.clientY;
-      let newLeft = clientX - dragOffX;
-      let newTop = clientY - dragOffY;
-      // גבולות
+      let newLeft = clientX - dragOffsetX;
+      let newTop = clientY - dragOffsetY;
       const maxLeft = window.innerWidth - hud.offsetWidth;
       const maxTop = window.innerHeight - hud.offsetHeight;
       if (newLeft < 0) newLeft = 0;
@@ -483,156 +440,159 @@
       if (newTop > maxTop) newTop = maxTop;
       hud.style.left = newLeft + 'px';
       hud.style.top = newTop + 'px';
-      e.preventDefault();
-      // נשמור
       saveHudPos();
     }
     document.addEventListener('mouseup', () => draggingHud = false);
     document.addEventListener('touchend', () => draggingHud = false);
 
-    // ******* הגדלה/הקטנה *******
-    hudHandle.addEventListener('mousedown', e => {
-      resizing = true;
-      e.stopPropagation();
+    // דאבל־טאץ’ להגדלה/הקטנה
+    let lastTap = 0;
+    hud.addEventListener('touchend', (e) => {
+      const now = Date.now();
+      if (now - lastTap < 300) {
+        // דאבל
+        hudScaleIdx = (hudScaleIdx + 1) % hudScales.length;
+        hud.style.transform = `scale(${hudScales[hudScaleIdx]})`;
+        saveHudPos();
+      }
+      lastTap = now;
     });
-    hudHandle.addEventListener('touchstart', e => {
-      resizing = true;
-      e.stopPropagation();
-    }, {passive:false});
-    document.addEventListener('mousemove', e => {
-      if (!resizing) return;
-      resizeHud(e.clientX, e.clientY);
-    });
-    document.addEventListener('touchmove', e => {
-      if (!resizing) return;
-      const t = e.touches[0];
-      resizeHud(t.clientX, t.clientY);
-    }, {passive:false});
-    document.addEventListener('mouseup', () => resizing = false);
-    document.addEventListener('touchend', () => resizing = false);
-    function resizeHud(clientX, clientY) {
-      const rect = hud.getBoundingClientRect();
-      const dx = clientX - rect.left;
-      const scale = Math.min(Math.max(dx / baseWidth, 0.6), 1.6);
-      hudScale = scale;
-      hud.style.transform = `scale(${hudScale})`;
-      saveHudPos();
-    }
 
-    // שמירת מיקום/סקייל ב-localStorage
+    // שמירה
     function saveHudPos() {
-      const rect = hud.getBoundingClientRect();
-      localStorage.setItem('skiApp_hud', JSON.stringify({
-        left: rect.left,
-        top: rect.top,
-        scale: hudScale
+      const r = hud.getBoundingClientRect();
+      localStorage.setItem('ski_hud_pos', JSON.stringify({
+        left: r.left,
+        top: r.top,
+        scale: hudScales[hudScaleIdx]
       }));
     }
     // שחזור
-    const saved = localStorage.getItem('skiApp_hud');
+    const saved = localStorage.getItem('ski_hud_pos');
     if (saved) {
-      const data = JSON.parse(saved);
-      hud.style.left = data.left + 'px';
-      hud.style.top = data.top + 'px';
-      hudScale = data.scale || 1;
-      hud.style.transform = `scale(${hudScale})`;
+      const d = JSON.parse(saved);
+      hud.style.left = d.left + 'px';
+      hud.style.top = d.top + 'px';
+      hud.style.transform = `scale(${d.scale})`;
+      hudScaleIdx = hudScales.indexOf(d.scale);
+      if (hudScaleIdx === -1) hudScaleIdx = 1;
     }
 
-    // ******* הקלטה *******
-    recordBtn.addEventListener('click', startRecording);
-    stopBtn.addEventListener('click', stopRecording);
+    // ======== הקלטה ========
+    btnRec.addEventListener('click', () => {
+      // אם לא ביקשנו עדיין GPS – זה הזמן
+      requestGeo();
+      startRecording();
+    });
+    btnStop.addEventListener('click', stopRecording);
 
     function startRecording() {
       if (recording) return;
-      // יצירת stream מהקנבס
       const stream = canvas.captureStream(30);
-      recorder = new MediaRecorder(stream, {
-        mimeType: 'video/webm;codecs=vp9,opus'
-      });
+      try {
+        mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm;codecs=vp9,opus' });
+      } catch (e) {
+        alert('הדפדפן לא תומך בהקלטת וידאו מהסוג הזה.');
+        return;
+      }
       chunks = [];
-      recorder.ondataavailable = ev => {
+      mediaRecorder.ondataavailable = ev => {
         if (ev.data.size > 0) chunks.push(ev.data);
       };
-      recorder.onstop = onRecordingStop;
-      recorder.start();
+      mediaRecorder.onstop = onRecordingStop;
+      mediaRecorder.start();
       recording = true;
-      recordBtn.classList.add('hidden');
-      stopBtn.classList.remove('hidden');
+      btnRec.classList.add('hidden');
+      btnStop.classList.remove('hidden');
     }
 
     function stopRecording() {
       if (!recording) return;
-      recorder.stop();
+      mediaRecorder.stop();
       recording = false;
-      stopBtn.classList.add('hidden');
-      recordBtn.classList.remove('hidden');
+      btnStop.classList.add('hidden');
+      btnRec.classList.remove('hidden');
     }
 
     function onRecordingStop() {
-      const blob = new Blob(chunks, {type: 'video/webm'});
+      const blob = new Blob(chunks, { type: 'video/webm' });
       const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.style.display = 'none';
-      a.href = url;
-      a.download = 'ski-speed-video.webm';
-      document.body.appendChild(a);
-      a.click();
-      setTimeout(() => {
-        document.body.removeChild(a);
-        URL.revokeObjectURL(url);
-      }, 3000);
+
+      // iOS – לפתוח בחלון חדש כדי שיוכל לשמור
+      const isIOS = /iPhone|iPad|iPod/i.test(navigator.userAgent);
+      if (isIOS) {
+        window.open(url, '_blank');
+      } else {
+        const a = document.createElement('a');
+        a.style.display = 'none';
+        a.href = url;
+        a.download = 'ski-speed-video.webm';
+        document.body.appendChild(a);
+        a.click();
+        setTimeout(() => {
+          document.body.removeChild(a);
+          URL.revokeObjectURL(url);
+        }, 2000);
+      }
       toast.style.display = 'block';
       setTimeout(() => toast.style.display = 'none', 4000);
     }
 
-    // ******* לולאת ציור -> כאן אנחנו שורפים על הקנבס גם את הוידאו וגם את המד *******
-    function drawFrame() {
+    // ======== לולאת ציור ========
+    function drawLoop() {
       if (cam.readyState >= 2) {
-        // שרטוט וידאו
+        // נשמור יחס: נצייר את הוידאו בקנבס 1:1
         ctx.drawImage(cam, 0, 0, canvas.width, canvas.height);
 
-        // להוסיף את HUD במיקום על המסך
+        // לצייר את ה-HUD במיקום שלו
         const hudRect = hud.getBoundingClientRect();
-        const appRect = document.body.getBoundingClientRect();
-        const x = hudRect.left - appRect.left;
-        const y = hudRect.top - appRect.top;
+        const bodyRect = document.body.getBoundingClientRect();
+        const x = hudRect.left - bodyRect.left;
+        const y = hudRect.top - bodyRect.top;
         const w = hudRect.width;
         const h = hudRect.height;
 
-        // רקע חצי שקוף
-        ctx.save();
-        ctx.globalAlpha = 0.28;
-        ctx.fillStyle = '#000';
+        // רקע לבן שקוף בוידאו
+        ctx.fillStyle = 'rgba(255,255,255,0.9)';
         ctx.fillRect(x, y, w, h);
-        ctx.restore();
 
-        // מסגרת
-        ctx.strokeStyle = 'rgba(0,214,255,0.55)';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(x, y, w, h);
+        // טקסט
+        ctx.fillStyle = '#000';
+        ctx.font = '10px Arial';
+        ctx.fillText('LIVE SPEED', x + 6, y + 13);
 
-        // טקסט של מהירות
-        ctx.fillStyle = '#ffffff';
-        ctx.font = 'bold 30px Arial';
-        ctx.fillText(latestSpeed.toString(), x + 16, y + h - 50);
-        ctx.font = '14px Arial';
-        ctx.fillStyle = 'rgba(255,255,255,0.7)';
-        ctx.fillText('KM/H', x + 16, y + h - 30);
+        ctx.font = 'bold 34px Arial';
+        ctx.fillText(latestSpeed.toString(), x + 6, y + 55);
+        ctx.font = '12px Arial';
+        ctx.fillText('KM/H', x + 6, y + 70);
 
-        // פס אנכי צבעוני לפי מהירות
-        const maxBar = h - 50;
-        const perc = Math.min(latestSpeed / 120, 1);
-        const barHeight = perc * maxBar;
-        let color = '#36d995';
-        if (latestSpeed <= 30) color = '#36d995';
-        else if (latestSpeed <= 55) color = '#00c0ff';
-        else if (latestSpeed <= 100) color = '#ff4a4a';
-        else color = '#000000';
-        ctx.fillStyle = color;
-        ctx.fillRect(x + w - 12, y + (maxBar - barHeight) + 20, 6, barHeight);
-
+        // סגמנטים בצד ימין
+        const segW = 9;
+        const segH = 20;
+        const gap = 4;
+        const baseX = x + w - segW - 6;
+        const baseY = y + 20;
+        const speeds = [
+          {limit: 1, color: 'rgba(0,0,0,0.08)'},
+          {limit: 25, color: '#3bd385'},
+          {limit: 45, color: '#00c8ff'},
+          {limit: 70, color: '#2b7cff'},
+          {limit: 100, color: '#ff4a4a'},
+          {limit: 130, color: '#000'}
+        ];
+        // נצבע לפי מהירות
+        for (let i = 0; i < 5; i++) {
+          let color = 'rgba(0,0,0,0.08)';
+          if (latestSpeed >= 100 && i === 4) color = '#000';
+          else if (latestSpeed >= 70 && i === 3) color = '#ff4a4a';
+          else if (latestSpeed >= 45 && i === 2) color = '#2b7cff';
+          else if (latestSpeed >= 25 && i === 1) color = '#00c8ff';
+          else if (latestSpeed >= 1 && i === 0) color = '#3bd385';
+          ctx.fillStyle = color;
+          ctx.fillRect(baseX, baseY + i*(segH+gap), segW, segH);
+        }
       }
-      requestAnimationFrame(drawFrame);
+      requestAnimationFrame(drawLoop);
     }
   </script>
 </body>
